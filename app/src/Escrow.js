@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { approve } from "./App";
-import escrowAbi from './artifacts/contracts/Escrow.sol/Escrow.json';
+import escrowAbi from './escrowAbi.json';
 
 export default function Escrow({
   address,

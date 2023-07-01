@@ -1,5 +1,5 @@
 app/dist
-app/artifacts
+app/artifacts/build-info/
 cache
 node_modules
 artifacts
