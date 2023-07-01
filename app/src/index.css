@@ -4,7 +4,8 @@ body {
   font-family: 'Muli', sans-serif;
 }
 
-.contract, .existing-contracts {
+.contract,
+.existing-contracts {
   margin: 20px;
   display: inline-block;
   padding: 40px;
@@ -26,24 +27,53 @@ label {
   margin: 20px;
 }
 
-input[type="text"] {
+input[type='text'] {
   padding: 6px;
   font-size: 18px;
 }
 
 .button {
-  background-color: #f58427;
+  background-color: #800040;
   color: white;
   text-align: center;
   font-weight: bold;
+  border-radius: 4px;
   text-transform: uppercase;
   margin: 20px;
   padding: 9px 25px;
   font-size: 14px;
   letter-spacing: 1px;
   cursor: pointer;
+  transition: background 1.4s ease 0s;
 }
 
+.error {
+  background-color: #f2dede;
+  padding: 10px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: red;
+  font-size: 12px;
+  margin: 10px 20px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-100px);
+
+  transition: opacity 0.4s ease, visibility 0s linear 0.3s;
+}
+
+.error.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+.button:hover {
+  background-color: #660033;
+  border-radius: 8px;
+}
 .existing-contract ul {
   padding: 10px;
   margin: 20px;
@@ -67,4 +97,7 @@ input[type="text"] {
 .existing-contract .complete {
   color: #5aa75a;
   text-align: center;
+}
+
+.inner {
 }

@@ -1,8 +1,7 @@
 import { ethers } from 'ethers';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import deploy from './deploy';
 import Escrow from './Escrow';
-
 const provider = new ethers.providers.Web3Provider(window.ethereum);
 
 export async function approve(escrowContract, signer) {
@@ -14,43 +13,54 @@ function App() {
   const [escrows, setEscrows] = useState([]);
   const [account, setAccount] = useState();
   const [signer, setSigner] = useState();
-
+  const [error, setError] = useState(null);
+  const errorDiv = useRef(null)
   useEffect(() => {
     async function getAccounts() {
       const accounts = await provider.send('eth_requestAccounts', []);
-
-      setAccount(accounts[0]);
-      setSigner(provider.getSigner());
+      return accounts[0];
     }
 
-    getAccounts();
-  }, [account]);
+    const escrowArray = JSON.parse(localStorage.getItem('escrows')) || [];
+    setEscrows(escrowArray);
+
+    getAccounts().then((account) => {
+      setAccount(account);
+      setSigner(provider.getSigner());
+    });
+  }, []);
+
 
   async function newContract() {
     const beneficiary = document.getElementById('beneficiary').value;
     const arbiter = document.getElementById('arbiter').value;
-    const value = ethers.BigNumber.from(document.getElementById('wei').value);
-    const escrowContract = await deploy(signer, arbiter, beneficiary, value);
+    try {
+      const value = ethers.BigNumber.from(
+        ethers.utils.parseEther(document.getElementById('ether').value)
+      );
+      const accountBalance = await provider.getBalance(account);
+      if (accountBalance.lt(value)) {
+        console.log('Insufficient funds');
+        setError('Insufficient funds');
+        return false;
+      }
+      console.log('Deploying contract');
+      const escrowContract = await deploy(signer, arbiter, beneficiary, value);
 
+      setEscrows([...escrows, escrowContract.address]);
+      localStorage.setItem(
+        'escrows',
+        JSON.stringify([
+          ...JSON.parse(localStorage.getItem('escrows') ?? '[]'),
+          escrowContract.address,
+        ])
+      );
+    } catch (error) {
+      console.log(error);
+      setError(error.reason);
+      errorDiv.current.style.display = 'block'
+    }
 
-    const escrow = {
-      address: escrowContract.address,
-      arbiter,
-      beneficiary,
-      value: value.toString(),
-      handleApprove: async () => {
-        escrowContract.on('Approved', () => {
-          document.getElementById(escrowContract.address).className =
-            'complete';
-          document.getElementById(escrowContract.address).innerText =
-            "✓ It's been approved!";
-        });
-
-        await approve(escrowContract, signer);
-      },
-    };
-
-    setEscrows([...escrows, escrow]);
   }
 
   return (
@@ -59,17 +69,25 @@ function App() {
         <h1> New Contract </h1>
         <label>
           Arbiter Address
-          <input type="text" id="arbiter" />
+          <input
+            type="text"
+            id="arbiter"
+            value={'0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'}
+          />
         </label>
 
         <label>
           Beneficiary Address
-          <input type="text" id="beneficiary" />
+          <input
+            type="text"
+            id="beneficiary"
+            value={'0x70997970C51812dc3A010C7d01b50e0d17dc79C8'}
+          />
         </label>
 
         <label>
-          Deposit Amount (in Wei)
-          <input type="text" id="wei" />
+          Deposit Amount (in Ether)
+          <input type="text" id="ether" />
         </label>
 
         <div
@@ -77,7 +95,6 @@ function App() {
           id="deploy"
           onClick={(e) => {
             e.preventDefault();
-
             newContract();
           }}
         >
@@ -87,13 +104,18 @@ function App() {
 
       <div className="existing-contracts">
         <h1> Existing Contracts </h1>
-
         <div id="container">
-          {escrows.map((escrow) => {
-            return <Escrow key={escrow.address} {...escrow} />;
+          {escrows?.map((address) => {
+            console.log(address);
+            return <Escrow key={address + Math.random(2)} address={address} setError={setError} errorDiv={errorDiv} />;
           })}
         </div>
       </div>
+
+      <div ref={errorDiv} className={`error ${error ? 'show' : ''}`}>
+        {error}
+      </div>
+
     </>
   );
 }
