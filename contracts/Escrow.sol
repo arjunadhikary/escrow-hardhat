@@ -2,26 +2,27 @@
 pragma solidity 0.8.17;
 
 contract Escrow {
-	address public arbiter;
-	address public beneficiary;
-	address public depositor;
+    event Approved(uint balance);
+    address public depositor;
+    address public beneficiary;
+    bool public isApproved;
+    address public arbiter;
 
-	bool public isApproved;
+    constructor(address _arb, address _ben) payable {
+        arbiter = _arb;
+        beneficiary = _ben;
+        depositor = msg.sender;
+    }
 
-	constructor(address _arbiter, address _beneficiary) payable {
-		arbiter = _arbiter;
-		beneficiary = _beneficiary;
-		depositor = msg.sender;
-	}
-
-	event Approved(uint);
-
-	function approve() external {
-		require(msg.sender == arbiter);
-		uint balance = address(this).balance;
-		(bool sent, ) = payable(beneficiary).call{value: balance}("");
- 		require(sent, "Failed to send Ether");
-		emit Approved(balance);
-		isApproved = true;
-	}
+    function approve() external {
+        require(
+            msg.sender == arbiter,
+            "Failed, action can be performed only by arbiter"
+        );
+        uint amount = address(this).balance;
+        (bool s, ) = beneficiary.call{value: amount}("");
+        require(s, "Failed to send ether");
+        isApproved = true;
+        emit Approved(amount);
+    }
 }
